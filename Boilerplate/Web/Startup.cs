@@ -7,26 +7,37 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Hellang.Middleware.ProblemDetails;
+using Microsoft.Extensions.Configuration;
 
 namespace Web
 {
     public class Startup
     {
+        private IConfiguration Configuration { get; }
+        private IWebHostEnvironment Environment { get; }
+
+        public Startup(IConfiguration configuration, IWebHostEnvironment environment)
+        {
+            Configuration = configuration;
+            Environment = environment;
+        }
         // This method gets called by the runtime. Use this method to add services to the container.
         // For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=398940
         public void ConfigureServices(IServiceCollection services)
         {
             services
+                .AddProblemDetails(opts =>
+                {
+                    opts.IncludeExceptionDetails = (ctx, ex) => !Environment.IsDevelopment();
+                })
                 .AddControllers();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
-            if (env.IsDevelopment())
-            {
-                app.UseDeveloperExceptionPage();
-            }
+            app.UseProblemDetails();
 
             // Endpoint routing separates the process of selecting which "endpoint" will execute from the actual running of that endpoint.
             // An endpoint consists of a path pattern, and something to execute when called.
