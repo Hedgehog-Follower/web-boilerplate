@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using System.Threading.Tasks;
+using Microsoft.AspNetCore.Mvc;
+using Web.HttpClients;
 
 namespace Web.Controllers
 {
@@ -6,10 +8,18 @@ namespace Web.Controllers
     [Route("[controller]")]
     public class WelcomeController : ControllerBase
     {
-        [HttpGet]
-        public IActionResult Get()
+        private readonly ITestClient _client;
+
+        public WelcomeController(ITestClient client)
         {
-            return Ok(new { name = "Hedgehog", activity = "follower" });
+            _client = client;
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetAsync()
+        {
+            var result = await _client.GetAsync();
+            return Ok(result);
         }
     }
 }

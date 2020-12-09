@@ -4,11 +4,14 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Hellang.Middleware.ProblemDetails;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Options;
+using Web.Handlers;
+using Web.HttpClients;
+using Web.Options.Clients;
+using Web.Policies;
 
 namespace Web
 {
@@ -32,6 +35,22 @@ namespace Web
                     opts.IncludeExceptionDetails = (ctx, ex) => !Environment.IsDevelopment();
                 })
                 .AddControllers();
+
+
+            services
+                .AddTransient<ValidateHeaderHandler>();
+
+            services
+                .Configure<TestConfiguration>(Configuration.GetSection(TestConfiguration.ConfigurationName));
+
+            services.TryAddSingleton<ITestConfiguration>(sp =>
+                sp.GetRequiredService<IOptions<TestConfiguration>>().Value);
+
+            services
+                .AddHttpClient<ITestClient, TestClient>()
+                .AddHttpMessageHandler<ValidateHeaderHandler>()
+                .AddPolicyHandler(PollyPolicies.GetRetryPolicy())
+                .AddPolicyHandler(PollyPolicies.GetTimeoutPolicy());
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
