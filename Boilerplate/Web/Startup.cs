@@ -51,6 +51,8 @@ namespace Web
                 .AddHttpMessageHandler<ValidateHeaderHandler>()
                 .AddPolicyHandler(PollyPolicies.GetRetryPolicy())
                 .AddPolicyHandler(PollyPolicies.GetTimeoutPolicy());
+
+            services.AddSingleton<IHttpClientForSingletonConsumers, HttpClientForSingletonConsumers>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
