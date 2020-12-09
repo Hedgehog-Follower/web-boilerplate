@@ -1,12 +1,13 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using System;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Web.HttpClients
 {
     public class HttpClientForSingletonConsumers : IHttpClientForSingletonConsumers
     {
-        private readonly ServiceProvider _serviceProvider;
+        private readonly IServiceProvider _serviceProvider;
 
-        public HttpClientForSingletonConsumers(ServiceProvider serviceProvider)
+        public HttpClientForSingletonConsumers(IServiceProvider serviceProvider)
         {
             _serviceProvider = serviceProvider;
         }
