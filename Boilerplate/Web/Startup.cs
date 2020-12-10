@@ -4,10 +4,12 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using System;
+using System.Net.Http;
 using Hellang.Middleware.ProblemDetails;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
+using Polly;
 using Web.Handlers;
 using Web.HttpClients;
 using Web.Options.Clients;
@@ -32,13 +34,11 @@ namespace Web
             services
                 .AddProblemDetails(opts =>
                 {
-                    opts.IncludeExceptionDetails = (ctx, ex) => !Environment.IsDevelopment();
+                    opts.IncludeExceptionDetails = (ctx, ex) => Environment.IsDevelopment();
                 })
                 .AddControllers();
 
 
-            services
-                .AddTransient<ValidateHeaderHandler>();
 
             services
                 .Configure<TestConfiguration>(Configuration.GetSection(TestConfiguration.ConfigurationName));
@@ -47,10 +47,16 @@ namespace Web
                 sp.GetRequiredService<IOptions<TestConfiguration>>().Value);
 
             services
+                .AddPollyPolicies()
                 .AddHttpClient<ITestClient, TestClient>()
-                .AddHttpMessageHandler<ValidateHeaderHandler>()
-                .AddPolicyHandler(PollyPolicies.GetRetryPolicy())
-                .AddPolicyHandler(PollyPolicies.GetTimeoutPolicy());
+                .AddPolicyHandlerFromRegistry(PolicyNames.Timeout)
+                .RegisterAndAddHttpMessageHandler<ValidateHeaderHandler>();
+
+            services
+                .AddHttpClient<IWelcomeClient, WelcomeClient>()
+                .AddPolicyHandlerFromRegistry(PolicyNames.RetryWithLogging)
+                .AddPolicyHandlerFromRegistry(PolicyNames.Timeout)
+                .RegisterAndAddHttpMessageHandler<ValidateHeaderHandler>();
 
             services.AddSingleton<IHttpClientForSingletonConsumers, HttpClientForSingletonConsumers>();
         }
