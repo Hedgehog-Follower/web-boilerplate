@@ -38,8 +38,6 @@ namespace Web
                 })
                 .AddControllers();
 
-
-
             services
                 .Configure<TestConfiguration>(Configuration.GetSection(TestConfiguration.ConfigurationName));
 
@@ -49,7 +47,7 @@ namespace Web
             services
                 .AddPollyPolicies()
                 .AddHttpClient<ITestClient, TestClient>()
-                .AddPolicyHandlerFromRegistry(PolicyNames.Timeout)
+                .AddPolicyHandlerFromRegistry(PolicyNames.Retry)
                 .RegisterAndAddHttpMessageHandler<ValidateHeaderHandler>();
 
             services

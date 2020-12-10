@@ -1,6 +1,8 @@
 ﻿using System;
+using System.IO;
 using System.Net.Http;
 using System.Threading.Tasks;
+using Newtonsoft.Json;
 using Web.Options.Clients;
 
 namespace Web.HttpClients
@@ -22,9 +24,13 @@ namespace Web.HttpClients
 
         public async Task<string> GetAsync()
         {
-            var result = await _client.GetAsync("/re");
 
-            return result.IsSuccessStatusCode ? result.Content.ToString() : "Error";
+            var response = await _client.GetAsync("/re", HttpCompletionOption.ResponseHeadersRead);
+
+            var stream = await response.Content.ReadAsStreamAsync();
+            var configuration = stream.ReadAndDeserializeFromJson<TestConfiguration>();
+
+            return string.Empty;
         }
     }
 }
