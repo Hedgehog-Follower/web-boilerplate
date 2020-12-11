@@ -1,9 +1,11 @@
 ﻿using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Web.HttpClients;
 
 namespace Web.Controllers
 {
+    [Produces("application/json")]
     [ApiController]
     [Route("[controller]")]
     public class WelcomeController : ControllerBase
@@ -17,7 +19,20 @@ namespace Web.Controllers
             _welcomeClient = welcomeClient;
         }
 
+        /// <summary>
+        /// GetAsync nothing special right here
+        /// </summary>
+        /// <remarks>
+        /// Sample request:
+        ///     GET /welcome
+        ///     {
+        ///         
+        ///     }
+        /// </remarks>
+        /// <returns>string</returns>
+        /// <response code="200">On success</response>
         [HttpGet]
+        [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<IActionResult> GetAsync()
         {
             

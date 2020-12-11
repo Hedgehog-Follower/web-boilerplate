@@ -1,3 +1,6 @@
+using System;
+using System.IO;
+using System.Reflection;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -7,6 +10,7 @@ using Hellang.Middleware.ProblemDetails;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
+using Microsoft.OpenApi.Models;
 using Web.Handlers;
 using Web.HealthChecks;
 using Web.HttpClients;
@@ -36,6 +40,21 @@ namespace Web
                     opts.IncludeExceptionDetails = (ctx, ex) => Environment.IsDevelopment();
                 })
                 .AddControllers();
+
+            services
+                .AddSwaggerGen(setup =>
+                {
+                    setup.SwaggerDoc("v1", new OpenApiInfo
+                    {
+                        Version = "v1",
+                        Title = "Welcome API",
+                        Description = "Example of configuration"
+                    });
+
+                    var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+                    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+                    setup.IncludeXmlComments(xmlPath);
+                });
 
             services
                 .Configure<TestConfiguration>(Configuration.GetSection(TestConfiguration.ConfigurationName));
@@ -68,6 +87,14 @@ namespace Web
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             app.UseProblemDetails();
+
+
+            app.UseSwagger();
+            app.UseSwaggerUI(setup =>
+            {
+                setup.SwaggerEndpoint("/swagger/v1/swagger.json", "My API V1");
+            });
+
 
             // Endpoint routing separates the process of selecting which "endpoint" will execute from the actual running of that endpoint.
             // An endpoint consists of a path pattern, and something to execute when called.
