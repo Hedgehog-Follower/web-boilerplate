@@ -3,16 +3,15 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using System;
-using System.Net.Http;
 using Hellang.Middleware.ProblemDetails;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
-using Polly;
 using Web.Handlers;
+using Web.HealthChecks;
 using Web.HttpClients;
 using Web.Options.Clients;
+using Web.Options.HealthChecks;
 using Web.Policies;
 
 namespace Web
@@ -40,6 +39,7 @@ namespace Web
 
             services
                 .Configure<TestConfiguration>(Configuration.GetSection(TestConfiguration.ConfigurationName));
+                //.Configure<BaseHealthCheckConfiguration>(Configuration.GetSection("HealthChecks:Ready"));
 
             services.TryAddSingleton<ITestConfiguration>(sp =>
                 sp.GetRequiredService<IOptions<TestConfiguration>>().Value);
@@ -57,6 +57,11 @@ namespace Web
                 .RegisterAndAddHttpMessageHandler<ValidateHeaderHandler>();
 
             services.AddSingleton<IHttpClientForSingletonConsumers, HttpClientForSingletonConsumers>();
+
+
+            services
+                .AddHealthChecks()
+                .AddUriHealthCheck(Configuration.GetSection($"{UriHealthCheckConfiguration.SectionPointer}{UriHealthCheckNames.Google}"));
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -79,6 +84,7 @@ namespace Web
                 {
                     await context.Response.WriteAsync("Hello World!");
                 });
+                endpoints.MapDefaultHealthChecks();
             });
         }
     }
