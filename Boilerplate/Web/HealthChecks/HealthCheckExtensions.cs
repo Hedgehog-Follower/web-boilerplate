@@ -1,7 +1,7 @@
 ﻿using System;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Web.Options.HealthChecks;
 
 namespace Web.HealthChecks
@@ -11,22 +11,44 @@ namespace Web.HealthChecks
         public static IHealthChecksBuilder AddUriHealthCheck(
             this IHealthChecksBuilder builder, IConfigurationSection configurationSection)
         {
-            if (configurationSection == null)
-            {
-                throw new ArgumentNullException(nameof(configurationSection));
-            }
-
-            var configuration = new UriHealthCheckConfiguration();
-            configurationSection.Bind(configuration);
+            var configuration = BindTo<UriHealthCheckConfiguration>(configurationSection);
 
             return 
                 builder
                     .AddUrlGroup(
                         new Uri(configuration.BaseAddress),
                         configuration.Name,
-                        (HealthStatus)configuration.Status,
+                        configuration.HealthStatus,
                         configuration.Tags, 
                         TimeSpan.FromSeconds(configuration.Timeout));
+        }
+
+        public static IHealthChecksBuilder AddDatabaseContextCheck<TContext>(
+            this IHealthChecksBuilder builder, IConfigurationSection configurationSection)
+            where TContext : DbContext
+        {
+            var configuration = BindTo<BaseHealthCheckConfiguration>(configurationSection);
+
+            return 
+                builder
+                    .AddDbContextCheck<TContext>(
+                        configuration.Name,
+                        configuration.HealthStatus,
+                        configuration.Tags);
+        }
+
+        private static TConfiguration BindTo<TConfiguration>(IConfigurationSection configurationSection)
+            where TConfiguration : BaseHealthCheckConfiguration, new()
+        {
+            if (configurationSection == null)
+            {
+                throw new ArgumentNullException(nameof(configurationSection));
+            }
+
+            var configuration = new TConfiguration();
+            configurationSection.Bind(configuration);
+
+            return configuration;
         }
     }
 }

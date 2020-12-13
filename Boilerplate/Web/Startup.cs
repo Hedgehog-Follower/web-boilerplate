@@ -11,6 +11,7 @@ using Hellang.Middleware.ProblemDetails;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Options;
 using Microsoft.OpenApi.Models;
 using Web.Handlers;
@@ -48,7 +49,12 @@ namespace Web
                 {
                     opts.IncludeExceptionDetails = (ctx, ex) => Environment.IsDevelopment();
                 })
-                .AddControllers();
+                .AddControllers()
+                .AddJsonOptions(options =>
+                {
+                    options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
+                    options.JsonSerializerOptions.WriteIndented = true;
+                });
 
             services
                 .AddSwaggerGen(setup =>
@@ -89,7 +95,10 @@ namespace Web
 
             services
                 .AddHealthChecks()
-                .AddUriHealthCheck(Configuration.GetSection($"{UriHealthCheckConfiguration.SectionPointer}{UriHealthCheckNames.Google}"));
+                .AddDbContextCheck<ApplicationContext>("ApplicationContext", HealthStatus.Unhealthy, new []{ "ready" })
+                .AddUriHealthCheck(Configuration.GetSection($"{UriHealthCheckConfiguration.SectionPointer}{UriHealthCheckNames.Google}"))
+                .AddDatabaseContextCheck<ApplicationContext>
+                    (Configuration.GetSection($"{DbContextHealthCheckConfiguration.SectionPointer}{DbContextCheckNames.ApplicationContext}"));
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

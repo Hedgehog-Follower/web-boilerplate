@@ -23,7 +23,6 @@ namespace Web.Hosts
                 catch (Exception ex)
                 {
                     // Log here when migration fail
-                    throw;
                 }
             }
 
